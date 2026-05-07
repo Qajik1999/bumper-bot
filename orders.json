@@ -1,0 +1,69 @@
+{
+  "active": [],
+  "completed": [
+    {
+      "step": "worker",
+      "brand": "test",
+      "plate": "77ss777",
+      "price": "7777",
+      "days": 5,
+      "worker": "Qajik",
+      "completedAt": "2026-05-06T21:36:09.090Z"
+    },
+    {
+      "step": "worker",
+      "brand": "test",
+      "plate": "77ss777",
+      "price": "0",
+      "days": 1,
+      "worker": "Qajik",
+      "finishDate": "2026-05-07T22:10:37.308Z",
+      "completedAt": "2026-05-06T22:10:45.264Z"
+    },
+    {
+      "step": "worker",
+      "brand": "test",
+      "plate": "ssss",
+      "price": 0,
+      "days": 1,
+      "worker": "Qajik",
+      "finishDate": "2026-05-07T22:27:50.887Z",
+      "completedAt": "2026-05-06T22:29:05.741Z",
+      "completedMonth": "2026-05"
+    },
+    {
+      "step": "worker",
+      "brand": "test01",
+      "plate": "22ee222",
+      "price": 10000,
+      "days": 2,
+      "worker": "Qajik",
+      "finishDate": "2026-05-08T22:29:24.895Z",
+      "completedAt": "2026-05-06T22:29:29.818Z",
+      "completedMonth": "2026-05"
+    },
+    {
+      "step": "worker",
+      "brand": "kkk",
+      "plate": ";l",
+      "price": 1000,
+      "days": 1,
+      "worker": "Qajik",
+      "finishDate": "2026-05-07T22:34:40.614Z",
+      "completedAt": "2026-05-06T22:34:45.736Z",
+      "completedMonth": "2026-05"
+    },
+    {
+      "step": "worker",
+      "brand": "test",
+      "plate": "33ee444",
+      "price": 0,
+      "phone": "033888986",
+      "days": 2,
+      "worker": "Levon",
+      "finishDate": "2026-05-08T22:48:36.775Z",
+      "completedAt": "2026-05-06T22:48:48.076Z",
+      "completedMonth": "2026-05"
+    }
+  ]
+}
