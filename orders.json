@@ -64,6 +64,20 @@
       "finishDate": "2026-05-08T22:48:36.775Z",
       "completedAt": "2026-05-06T22:48:48.076Z",
       "completedMonth": "2026-05"
+    },
+    {
+      "step": "worker",
+      "brand": "test4",
+      "plate": "77ee777",
+      "phone": "778877",
+      "days": 4,
+      "price": 5000,
+      "worker": "Qajik",
+      "finishDate": "2026-05-12T22:11:08.479Z",
+      "completedAt": "2026-05-08T22:12:28.791Z",
+      "completedMonth": "2026-05",
+      "qajikShare": 2000,
+      "levonShare": 3000
     }
   ]
 }
