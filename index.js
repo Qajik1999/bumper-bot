@@ -1,6 +1,8 @@
 const express = require('express');
 const fs = require('fs');
+const path = require('path');
 const TelegramBot = require('node-telegram-bot-api');
+const schedule = require('node-schedule');
 
 const app = express();
 
@@ -79,6 +81,15 @@ bot.onText(/\/cancel/, (msg) => {
 
 bot.onText(/\/id/, (msg) => {
   bot.sendMessage(msg.chat.id, `Քո ID-ն է՝ ${msg.from.id}`);
+});
+bot.onText(/\/backup/, (msg) => {
+  if (!ADMINS.includes(msg.from.id)) {
+    return bot.sendMessage(msg.chat.id, "❌ Դու իրավունք չունես");
+  }
+
+  createBackup();
+
+  bot.sendMessage(msg.chat.id, "✅ Backup ուղարկվեց");
 });
 
 bot.on('message', (msg) => {
@@ -443,7 +454,31 @@ function checkDeadlines() {
 
 setInterval(checkDeadlines, 6 * 60 * 60 * 1000);
 checkDeadlines();
+function createBackup() {
+  const date = new Date().toISOString().slice(0, 10);
+
+  const backupData = {
+    active: orders,
+    completed: completedOrders
+  };
+
+  const fileName = `backup-${date}.json`;
+  const filePath = path.join(__dirname, fileName);
+
+  fs.writeFileSync(filePath, JSON.stringify(backupData, null, 2));
+
+  ADMINS.forEach(adminId => {
+    bot.sendDocument(adminId, filePath, {
+      caption: `📦 Backup ${date}`
+    });
+  });
+
+  console.log(`Backup created and sent: ${fileName}`);
+}
 
 bot.on('polling_error', (error) => {
   console.log("POLLING ERROR:", error.message);
+});
+schedule.scheduleJob('0 3 * * *', () => {
+  createBackup();
 });
