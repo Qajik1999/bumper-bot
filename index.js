@@ -1,4 +1,7 @@
 const express = require('express');
+const fs = require('fs');
+const TelegramBot = require('node-telegram-bot-api');
+
 const app = express();
 
 app.get('/', (req, res) => {
@@ -6,39 +9,18 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-let userState = {};
-const TelegramBot = require ('node-telegram-bot-api');
-const schedule = require('node-schedule');
 
-const token = '8780622148:AAFQ8jZVDY4RvNh6iBZqvfJeKkL8oGl5Zbg'; // ստացածդ BotFather-ից
+const token = process.env.BOT_TOKEN || '8780622148:AAF5SkS8HJS_wSWhTG3455vMfM34KG7_JgE';
 const bot = new TelegramBot(token, { polling: true });
+
 console.log("BOT STARTED NEW CODE");
 
-bot.onText(/\/cancel/, (msg) => {
-  delete userState[msg.chat.id];
+const ADMINS = [819433629, 1013947524];
 
-  bot.sendMessage(msg.chat.id, "Չեղարկվեց ✅", {
-    reply_markup: {
- keyboard: [
-  ["➕ Ավելացնել պատվեր"],
-  ["📋 Պատվերներ"],
-  ["✅ Ավարտված պատվերներ"],
-  ["💰 Այս ամսվա եկամուտ"],
-  ["⏰ Մոտ deadline-ներ"]
-],
-      resize_keyboard: true
-    }
-  });
-});
-// 👇 ՔՈ ու ԸՆԿԵՐՈՋ ID-ները
-const ADMINS = [819433629 , 1013947524];
-
-const fs = require('fs');
-
+let userStates = {};
 let orders = [];
 let completedOrders = [];
 
@@ -53,133 +35,221 @@ if (fs.existsSync('orders.json')) {
     completedOrders = data.completed || [];
   }
 }
-bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id, "Ընտրիր 👇", {
+
+function saveOrders() {
+  fs.writeFileSync('orders.json', JSON.stringify({
+    active: orders,
+    completed: completedOrders
+  }, null, 2));
+}
+
+function cleanOldCompletedOrders() {
+  const limit = new Date();
+  limit.setMonth(limit.getMonth() - 12);
+
+  completedOrders = completedOrders.filter(order => {
+    if (!order.completedAt) return true;
+    return new Date(order.completedAt) >= limit;
+  });
+}
+
+function mainMenu(chatId, text = "📋 Գլխավոր մենյու") {
+  return bot.sendMessage(chatId, text, {
     reply_markup: {
-    keyboard: [
-  ["➕ Ավելացնել պատվեր"],
-  ["📋 Պատվերներ"],
-  ["✅ Ավարտված պատվերներ"],
-  ["💰 Այս ամսվա եկամուտ"],
-  ["⏰ Մոտ deadline-ներ"]
-],
+      keyboard: [
+        ["➕ Ավելացնել պատվեր"],
+        ["📋 Պատվերներ"],
+        ["✅ Ավարտված պատվերներ"],
+        ["💰 Այս ամսվա եկամուտ"],
+        ["⏰ Մոտ deadline-ներ"]
+      ],
       resize_keyboard: true
     }
   });
+}
+
+bot.onText(/\/start/, (msg) => {
+  mainMenu(msg.chat.id, "Ընտրիր 👇");
 });
 
-// նոր պատվեր
+bot.onText(/\/cancel/, (msg) => {
+  delete userStates[msg.chat.id];
+  mainMenu(msg.chat.id, "Չեղարկվեց ✅");
+});
+
+bot.onText(/\/id/, (msg) => {
+  bot.sendMessage(msg.chat.id, `Քո ID-ն է՝ ${msg.from.id}`);
+});
+
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-
-if (!ADMINS.includes(userId)) {
-  return bot.sendMessage(chatId, "❌ Դու իրավունք չունես");
-}
   const text = msg.text;
-  if (text === "⏰ Մոտ deadline-ներ") {
 
-  if (orders.length === 0) {
-    return bot.sendMessage(chatId, "Պատվեր չկա");
+  if (!text) return;
+
+  if (!ADMINS.includes(userId)) {
+    return bot.sendMessage(chatId, "❌ Դու իրավունք չունես");
   }
 
-  const now = new Date();
+  if (text.startsWith('/')) return;
 
-  let result = "⏰ Deadline-ներ\n\n";
+  const state = userStates[chatId];
 
-  orders.forEach(o => {
+  // եթե վերջնական գումար ենք սպասում
+  if (state && state.step === "final_price") {
+    const order = orders[state.orderIndex];
 
-    const finish = new Date(o.finishDate);
-
-    const diffTime = finish - now;
-
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      result += `🔴 Ուշացել է\n🚗 ${o.brand} (${o.plate})\n\n`;
-    }
-    else if (diffDays === 0) {
-      result += `🟠 Այսօր deadline\n🚗 ${o.brand} (${o.plate})\n\n`;
-    }
-    else if (diffDays === 1) {
-      result += `🟡 Վաղը deadline\n🚗 ${o.brand} (${o.plate})\n\n`;
-    }
-    else {
-      result += `🟢 ${diffDays} օր մնացել է\n🚗 ${o.brand} (${o.plate})\n\n`;
+    if (!order) {
+      delete userStates[chatId];
+      return bot.sendMessage(chatId, "❌ Պատվերը չգտնվեց");
     }
 
-  });
+    order.price = Number(text);
 
-  return bot.sendMessage(chatId, result);
-}
+    const doneOrder = orders.splice(state.orderIndex, 1)[0];
 
- if (text === "💰 Այս ամսվա եկամուտ") {
-  cleanOldCompletedOrders();
-  saveOrders();
+    doneOrder.completedAt = new Date().toISOString();
+    doneOrder.completedMonth = new Date().toISOString().slice(0, 7);
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+    userStates[chatId] = {
+      step: "qajik_share",
+      doneOrder
+    };
 
-  const monthOrders = completedOrders.filter(o => {
-    const orderMonth = o.completedMonth || (o.completedAt ? o.completedAt.slice(0, 7) : "");
-    return orderMonth === currentMonth;
-  });
-
-  const total = monthOrders.reduce((sum, o) => {
-    return sum + (Number(o.price) || 0);
-  }, 0);
-
-  return bot.sendMessage(chatId,
-    `💰 Այս ամսվա եկամուտ\n\n` +
-    `📦 Ավարտված պատվերներ՝ ${monthOrders.length}\n` +
-    `💵 Գումար՝ ${total} դրամ`
-  );
-}
-  if (text === "✅ Ավարտված պատվերներ") {
-  if (completedOrders.length === 0) {
-    return bot.sendMessage(chatId, "Ավարտված պատվեր չկա");
+    return bot.sendMessage(chatId, "💵 Գրեք Qajik-ի բաժինը");
   }
 
-  let t = "✅ Ավարտված պատվերներ\n\n";
+  // եթե Qajik-ի բաժինն ենք սպասում
+  if (state && state.step === "qajik_share") {
+    const qajikShare = Number(text);
+    const doneOrder = state.doneOrder;
 
-  completedOrders.forEach((o, i) => {
-    const date = new Date(o.completedAt).toLocaleString();
+    doneOrder.qajikShare = qajikShare;
+    doneOrder.levonShare = Number(doneOrder.price) - qajikShare;
 
-    t += `${i+1}. 🚗 ${o.brand} (${o.plate})\n`;
-    t += `📅 Ավարտվել է՝ ${date}\n\n`;
-  });
+    completedOrders.push(doneOrder);
 
-  return bot.sendMessage(chatId, t);
-}
+    cleanOldCompletedOrders();
+    saveOrders();
+
+    delete userStates[chatId];
+
+    return bot.sendMessage(chatId,
+      `✅ Ավարտվեց\n🚗 ${doneOrder.brand} (${doneOrder.plate})\n` +
+      `💰 Ընդհանուր՝ ${doneOrder.price} դրամ\n` +
+      `👤 Qajik՝ ${doneOrder.qajikShare} դրամ\n` +
+      `👤 Levon՝ ${doneOrder.levonShare} դրամ`
+    );
+  }
 
   if (text === "➕ Ավելացնել պատվեր") {
-    userState[chatId] = { step: "brand" };
+    userStates[chatId] = { step: "brand" };
     return bot.sendMessage(chatId, "Գրի մեքենայի մակնիշը 🚗");
   }
 
   if (text === "📋 Պատվերներ") {
-  if (orders.length === 0) {
-    return bot.sendMessage(chatId, "Պատվեր չկա");
+    if (orders.length === 0) {
+      return bot.sendMessage(chatId, "Պատվեր չկա");
+    }
+
+    orders.forEach((o, i) => {
+      bot.sendMessage(chatId,
+        `🚗 ${o.brand} (${o.plate})\n📞 ${o.phone || "չկա"}\n💰 ${o.price ? o.price + " դրամ" : "վերջում"}`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "✅ Պատրաստ ա", callback_data: `done_${i}` }]
+            ]
+          }
+        }
+      );
+    });
+
+    return;
   }
 
-  orders.forEach((o, i) => {
-    bot.sendMessage(chatId,
-      `🚗 ${o.brand} (${o.plate})\n📞 ${o.phone || "չկա"}`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "✅ Պատրաստ ա", callback_data: `done_${i}` }]
-          ]
+  if (text === "✅ Ավարտված պատվերներ") {
+    if (completedOrders.length === 0) {
+      return bot.sendMessage(chatId, "Ավարտված պատվեր չկա");
+    }
+
+    completedOrders.forEach((o, i) => {
+      const date = o.completedAt ? new Date(o.completedAt).toLocaleString() : "չկա";
+
+      bot.sendMessage(chatId,
+        `✅ Ավարտված\n\n🚗 ${o.brand} (${o.plate})\n` +
+        `📞 ${o.phone || "չկա"}\n` +
+        `💰 ${o.price || 0} դրամ\n` +
+        `👤 Qajik՝ ${o.qajikShare || 0} դրամ\n` +
+        `👤 Levon՝ ${o.levonShare || 0} դրամ\n` +
+        `📅 ${date}`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🗑 Ջնջել պատմությունից", callback_data: `delete_completed_${i}` }]
+            ]
+          }
         }
-      }
+      );
+    });
+
+    return;
+  }
+
+  if (text === "💰 Այս ամսվա եկամուտ") {
+    cleanOldCompletedOrders();
+    saveOrders();
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+
+    const monthOrders = completedOrders.filter(o => {
+      const orderMonth = o.completedMonth || (o.completedAt ? o.completedAt.slice(0, 7) : "");
+      return orderMonth === currentMonth;
+    });
+
+    const total = monthOrders.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
+    const qajikTotal = monthOrders.reduce((sum, o) => sum + (Number(o.qajikShare) || 0), 0);
+    const levonTotal = monthOrders.reduce((sum, o) => sum + (Number(o.levonShare) || 0), 0);
+
+    return bot.sendMessage(chatId,
+      `💰 Այս ամսվա եկամուտ\n\n` +
+      `📦 Ավարտված պատվերներ՝ ${monthOrders.length}\n` +
+      `💵 Ընդհանուր՝ ${total} դրամ\n\n` +
+      `👤 Qajik՝ ${qajikTotal} դրամ\n` +
+      `👤 Levon՝ ${levonTotal} դրամ`
     );
-  });
+  }
 
-  return;
-}
-  // steps
-  if (!userState[chatId]) return;
+  if (text === "⏰ Մոտ deadline-ներ") {
+    if (orders.length === 0) {
+      return bot.sendMessage(chatId, "Պատվեր չկա");
+    }
 
-  let state = userState[chatId];
+    const now = new Date();
+    let result = "⏰ Deadline-ներ\n\n";
+
+    orders.forEach(o => {
+      const finish = new Date(o.finishDate);
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const finishDay = new Date(finish.getFullYear(), finish.getMonth(), finish.getDate());
+      const diffDays = Math.round((finishDay - today) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        result += `🔴 Ուշացել է\n🚗 ${o.brand} (${o.plate})\n\n`;
+      } else if (diffDays === 0) {
+        result += `🟠 Այսօր deadline\n🚗 ${o.brand} (${o.plate})\n\n`;
+      } else if (diffDays === 1) {
+        result += `🟡 Վաղը deadline\n🚗 ${o.brand} (${o.plate})\n\n`;
+      } else {
+        result += `🟢 ${diffDays} օր մնացել է\n🚗 ${o.brand} (${o.plate})\n\n`;
+      }
+    });
+
+    return bot.sendMessage(chatId, result);
+  }
+
+  if (!state) return;
 
   if (state.step === "brand") {
     state.brand = text;
@@ -189,173 +259,191 @@ if (!ADMINS.includes(userId)) {
 
   if (state.step === "plate") {
     state.plate = text;
-    state.step = "price";
-    return bot.sendMessage(chatId, "Գումարը 💰");
+    state.step = "phone";
+    return bot.sendMessage(chatId, "Գրի հաճախորդի հեռախոսահամարը 📞");
   }
 
- if (state.step === "price") {
-  state.price = text;
-  state.step = "phone";
-  return bot.sendMessage(chatId, "Գրի հաճախորդի հեռախոսահամարը 📞");
-}
-
-if (state.step === "phone") {
-  state.phone = text;
-  state.step = "days";
-  return bot.sendMessage(chatId, "Քանի օրում պատրաստ 📅");
-}
+  if (state.step === "phone") {
+    state.phone = text;
+    state.step = "days";
+    return bot.sendMessage(chatId, "Քանի օրում պատրաստ 📅");
+  }
 
   if (state.step === "days") {
     state.days = parseInt(text);
+    state.step = "price_choice";
 
-    state.step = "worker";
-
-    return bot.sendMessage(chatId, "Ընտրիր աշխատող 👇", {
+    return bot.sendMessage(chatId, "💰 Գումարը հիմա՞ գիտեք", {
       reply_markup: {
-        keyboard: [["Qajik", "Levon"]],
+        keyboard: [
+          ["💰 Հիմա գրել"],
+          ["⏳ Վերջում գրել"]
+        ],
         resize_keyboard: true
       }
     });
   }
 
- if (state.step === "worker") {
-
-  state.worker = text;
-
-  let targetId;
-
-  if (text === "Qajik") {
-    targetId = ADMINS[0];
-  } else if (text === "Levon") {
-    targetId = ADMINS[0]; // հետո կփոխենք ընկերոջ ID-ով
-  } else {
-    return bot.sendMessage(chatId, "Ընտրիր միայն կոճակով 👇");
-  }
-
-  const finishDate = new Date();
-  finishDate.setDate(finishDate.getDate() + state.days);
-
-  const reminderDate = new Date();
-  reminderDate.setDate(reminderDate.getDate() + (state.days - 1));
-
-  state.finishDate = finishDate;
-
-  orders.push(state);
-
-  saveOrders();
-
-  bot.sendMessage(chatId,
-    `✅ Պատվերը գրանցվեց\n🚗 ${state.brand}\n🔢 ${state.plate}\n📞 ${state.phone}`
-  );
-
-  // schedule.scheduleJob(reminderDate, () => {
-  //   bot.sendMessage(targetId,
-  //     `⚠️ Վաղը վերջնաժամկետ\n🚗 ${state.brand}`
-  //   );
-  // });
-
-  // schedule.scheduleJob(finishDate, () => {
-  //   bot.sendMessage(targetId,
-  //     `📅 Այսօր վերջնաժամկետ\n🚗 ${state.brand}`
-  //   );
-  // });
-
-  delete userState[chatId];
-
-  return bot.sendMessage(chatId, "📋 Գլխավոր մենյու", {
-    reply_markup: {
-    keyboard: [
-  ["➕ Ավելացնել պատվեր"],
-  ["📋 Պատվերներ"],
-  ["✅ Ավարտված պատվերներ"],
-  ["💰 Այս ամսվա եկամուտ"],
-  ["⏰ Մոտ deadline-ներ"]
-],
-      resize_keyboard: true
+  if (state.step === "price_choice") {
+    if (text === "💰 Հիմա գրել") {
+      state.step = "price";
+      return bot.sendMessage(chatId, "💵 Գրեք գումարը");
     }
-  });
-}
-});
 
-// պատվերների ցուցակ
-bot.onText(/\/orders/, (msg) => {
-  const chatId = msg.chat.id;
+    if (text === "⏳ Վերջում գրել") {
+      state.price = null;
+      state.step = "worker";
 
-  if (orders.length === 0) {
-    return bot.sendMessage(chatId, "Պատվեր չկա");
+      return bot.sendMessage(chatId, "👨‍🔧 Ով է աշխատում", {
+        reply_markup: {
+          keyboard: [
+            ["Qajik"],
+            ["Levon"]
+          ],
+          resize_keyboard: true
+        }
+      });
+    }
+
+    return bot.sendMessage(chatId, "Ընտրիր կոճակով 👇");
   }
 
-  orders.forEach((o, i) => {
-    bot.sendMessage(chatId,
-      `🚗 ${o.brand} (${o.plate})`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "✅ Պատրաստ ա", callback_data: `done_${i}` }]
-          ]
-        }
+  if (state.step === "price") {
+    state.price = Number(text);
+    state.step = "worker";
+
+    return bot.sendMessage(chatId, "👨‍🔧 Ով է աշխատում", {
+      reply_markup: {
+        keyboard: [
+          ["Qajik"],
+          ["Levon"]
+        ],
+        resize_keyboard: true
       }
+    });
+  }
+
+  if (state.step === "worker") {
+    if (text !== "Qajik" && text !== "Levon") {
+      return bot.sendMessage(chatId, "Ընտրիր միայն կոճակով 👇");
+    }
+
+    state.worker = text;
+
+    const finishDate = new Date();
+    finishDate.setDate(finishDate.getDate() + state.days);
+
+    state.finishDate = finishDate.toISOString();
+
+    orders.push(state);
+    saveOrders();
+
+    delete userStates[chatId];
+
+    bot.sendMessage(chatId,
+      `✅ Պատվերը գրանցվեց\n🚗 ${state.brand}\n🔢 ${state.plate}\n📞 ${state.phone}`
     );
-  });
+
+    return mainMenu(chatId);
+  }
 });
+
 bot.on('callback_query', (query) => {
   const data = query.data;
   const msg = query.message;
+  const chatId = msg.chat.id;
 
   if (data.startsWith("done_")) {
     const index = parseInt(data.split("_")[1]);
+    const doneOrder = orders[index];
 
-    const order = orders[index];
+    if (!doneOrder) {
+      return bot.answerCallbackQuery(query.id, { text: "Պատվերը չգտնվեց" });
+    }
 
-    if (!order) return;
+    if (!doneOrder.price) {
+      userStates[chatId] = {
+        step: "final_price",
+        orderIndex: index
+      };
 
-    const doneOrder = orders.splice(index, 1)[0];
+      bot.sendMessage(chatId, "💰 Գրեք վերջնական գումարը");
 
-doneOrder.completedAt = new Date();
+      return bot.answerCallbackQuery(query.id, {
+        text: "Սպասում եմ գումարին 💰"
+      });
+    }
 
-doneOrder.completedAt = new Date().toISOString();
-doneOrder.completedMonth = new Date().toISOString().slice(0, 7); // օրինակ 2026-05
-doneOrder.price = Number(doneOrder.price) || 0;
+    orders.splice(index, 1);
 
-completedOrders.push(doneOrder);
-function cleanOldCompletedOrders() {
-  const now = new Date();
-  const limit = new Date();
-  limit.setMonth(now.getMonth() - 12);
+    doneOrder.completedAt = new Date().toISOString();
+    doneOrder.completedMonth = new Date().toISOString().slice(0, 7);
+    doneOrder.price = Number(doneOrder.price) || 0;
 
-  completedOrders = completedOrders.filter(order => {
-    if (!order.completedAt) return true;
-    return new Date(order.completedAt) >= limit;
-  });
-}
+    userStates[chatId] = {
+      step: "qajik_share",
+      doneOrder
+    };
 
-saveOrders();
+    bot.sendMessage(chatId, "💵 Գրեք Qajik-ի բաժինը");
+
+    return bot.answerCallbackQuery(query.id, {
+      text: "Գրեք Qajik-ի բաժինը"
+    });
+  }
+
+  if (data.startsWith("delete_completed_")) {
+    const index = parseInt(data.replace("delete_completed_", ""));
+    const deletedOrder = completedOrders.splice(index, 1)[0];
+
+    if (!deletedOrder) {
+      return bot.answerCallbackQuery(query.id, { text: "Չգտնվեց" });
+    }
 
     saveOrders();
 
-    bot.sendMessage(msg.chat.id,
-  `✅ Ավարտվեց վաղ\n🚗 ${order.brand} (${order.plate})`
-);
+    bot.sendMessage(chatId,
+      `🗑 Ջնջվեց պատմությունից\n🚗 ${deletedOrder.brand} (${deletedOrder.plate})`
+    );
+
+    return bot.answerCallbackQuery(query.id, {
+      text: "Ջնջվեց ✅"
+    });
   }
 });
 
-function saveOrders() {
-  fs.writeFileSync('orders.json', JSON.stringify({
-    active: orders,
-    completed: completedOrders
-  }, null, 2));
-}
-function cleanOldCompletedOrders() {
+function checkDeadlines() {
   const now = new Date();
-  const limit = new Date();
-  limit.setMonth(now.getMonth() - 12);
 
-  completedOrders = completedOrders.filter(order => {
-    if (!order.completedAt) return true;
-    return new Date(order.completedAt) >= limit;
+  orders.forEach(order => {
+    const finish = new Date(order.finishDate);
+
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const finishDay = new Date(finish.getFullYear(), finish.getMonth(), finish.getDate());
+
+    const diffDays = Math.round((finishDay - today) / (1000 * 60 * 60 * 24));
+
+    let message = null;
+
+    if (diffDays < 0) {
+      message = `🔴 Ուշացած պատվեր\n🚗 ${order.brand} (${order.plate})\n📞 ${order.phone || "չկա"}`;
+    } else if (diffDays === 0) {
+      message = `🟠 Այսօր վերջին օրն է\n🚗 ${order.brand} (${order.plate})\n📞 ${order.phone || "չկա"}`;
+    } else if (diffDays === 1) {
+      message = `🟡 Վաղը վերջին օրն է\n🚗 ${order.brand} (${order.plate})\n📞 ${order.phone || "չկա"}`;
+    }
+
+    if (!message) return;
+
+    ADMINS.forEach(adminId => {
+      bot.sendMessage(adminId, message);
+    });
   });
 }
+
+setInterval(checkDeadlines, 6 * 60 * 60 * 1000);
+checkDeadlines();
+
 bot.on('polling_error', (error) => {
   console.log("POLLING ERROR:", error.message);
-  console.log(error);
 });
