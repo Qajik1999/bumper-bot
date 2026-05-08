@@ -35,7 +35,7 @@ bot.onText(/\/cancel/, (msg) => {
   });
 });
 // 👇 ՔՈ ու ԸՆԿԵՐՈՋ ID-ները
-const ADMINS = [819433629];
+const ADMINS = [819433629 , 1013947524];
 
 const fs = require('fs');
 
@@ -71,6 +71,11 @@ bot.onText(/\/start/, (msg) => {
 // նոր պատվեր
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+if (!ADMINS.includes(userId)) {
+  return bot.sendMessage(chatId, "❌ Դու իրավունք չունես");
+}
   const text = msg.text;
   if (text === "⏰ Մոտ deadline-ներ") {
 
@@ -243,17 +248,17 @@ if (state.step === "phone") {
     `✅ Պատվերը գրանցվեց\n🚗 ${state.brand}\n🔢 ${state.plate}\n📞 ${state.phone}`
   );
 
-  schedule.scheduleJob(reminderDate, () => {
-    bot.sendMessage(targetId,
-      `⚠️ Վաղը վերջնաժամկետ\n🚗 ${state.brand}`
-    );
-  });
+  // schedule.scheduleJob(reminderDate, () => {
+  //   bot.sendMessage(targetId,
+  //     `⚠️ Վաղը վերջնաժամկետ\n🚗 ${state.brand}`
+  //   );
+  // });
 
-  schedule.scheduleJob(finishDate, () => {
-    bot.sendMessage(targetId,
-      `📅 Այսօր վերջնաժամկետ\n🚗 ${state.brand}`
-    );
-  });
+  // schedule.scheduleJob(finishDate, () => {
+  //   bot.sendMessage(targetId,
+  //     `📅 Այսօր վերջնաժամկետ\n🚗 ${state.brand}`
+  //   );
+  // });
 
   delete userState[chatId];
 
