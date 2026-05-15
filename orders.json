@@ -1,83 +1,176 @@
 {
-  "active": [],
+  "active": [
+    {
+      "step": "worker",
+      "brand": "Teana im hetevi shit",
+      "plate": "88QJ868",
+      "phone": "033888986",
+      "days": 10,
+      "price": 0,
+      "worker": "Levon",
+      "finishDate": "2026-05-19T11:26:01.319Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Camry Saqo",
+      "plate": "None",
+      "phone": "Lyov",
+      "days": 3,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-05-12T11:28:40.381Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Kia Selots spitak",
+      "plate": "None",
+      "phone": "Qanaqer dzox pchox",
+      "days": 2,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-05-11T11:29:56.408Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Sev Volt",
+      "plate": "None",
+      "phone": "None",
+      "days": 7,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-05-16T11:31:20.968Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Jeep%",
+      "plate": "90 444",
+      "phone": "Tiko 911",
+      "days": 2,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-05-12T09:54:42.757Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Mercedes banan",
+      "plate": "None",
+      "phone": "Lyovy gidi",
+      "days": 1,
+      "price": 45000,
+      "worker": "Levon",
+      "finishDate": "2026-05-13T13:01:57.754Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Chevrole demi shit qanaqer",
+      "plate": "None",
+      "phone": "077490560",
+      "days": 4,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-05-16T13:03:54.196Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Merc C class 202",
+      "plate": "Narek",
+      "phone": "Lyovy gidi",
+      "days": 28,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-06-09T13:05:01.680Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Electro sec police",
+      "plate": "Ktor bervi",
+      "phone": "Lyov",
+      "days": 23,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-06-04T13:05:55.339Z"
+    },
+    {
+      "step": "worker",
+      "brand": "Elektrishka uzornerov",
+      "plate": "Ktor chka",
+      "phone": "Lyov",
+      "days": 19,
+      "price": null,
+      "worker": "Levon",
+      "finishDate": "2026-05-31T13:06:35.999Z"
+    }
+  ],
   "completed": [
     {
       "step": "worker",
-      "brand": "test",
-      "plate": "77ss777",
-      "price": "7777",
-      "days": 5,
-      "worker": "Qajik",
-      "completedAt": "2026-05-06T21:36:09.090Z"
-    },
-    {
-      "step": "worker",
-      "brand": "test",
-      "plate": "77ss777",
-      "price": "0",
-      "days": 1,
-      "worker": "Qajik",
-      "finishDate": "2026-05-07T22:10:37.308Z",
-      "completedAt": "2026-05-06T22:10:45.264Z"
-    },
-    {
-      "step": "worker",
-      "brand": "test",
-      "plate": "ssss",
-      "price": 0,
-      "days": 1,
-      "worker": "Qajik",
-      "finishDate": "2026-05-07T22:27:50.887Z",
-      "completedAt": "2026-05-06T22:29:05.741Z",
-      "completedMonth": "2026-05"
-    },
-    {
-      "step": "worker",
-      "brand": "test01",
-      "plate": "22ee222",
-      "price": 10000,
-      "days": 2,
-      "worker": "Qajik",
-      "finishDate": "2026-05-08T22:29:24.895Z",
-      "completedAt": "2026-05-06T22:29:29.818Z",
-      "completedMonth": "2026-05"
-    },
-    {
-      "step": "worker",
-      "brand": "kkk",
-      "plate": ";l",
-      "price": 1000,
-      "days": 1,
-      "worker": "Qajik",
-      "finishDate": "2026-05-07T22:34:40.614Z",
-      "completedAt": "2026-05-06T22:34:45.736Z",
-      "completedMonth": "2026-05"
-    },
-    {
-      "step": "worker",
-      "brand": "test",
-      "plate": "33ee444",
-      "price": 0,
-      "phone": "033888986",
-      "days": 2,
+      "brand": "Kia Selotos Ashot",
+      "plate": "37433",
+      "phone": "Levon",
+      "days": 0,
+      "price": 15000,
       "worker": "Levon",
-      "finishDate": "2026-05-08T22:48:36.775Z",
-      "completedAt": "2026-05-06T22:48:48.076Z",
-      "completedMonth": "2026-05"
+      "finishDate": "2026-05-09T11:29:21.727Z",
+      "completedAt": "2026-05-09T11:31:53.811Z",
+      "completedMonth": "2026-05",
+      "qajikShare": 0,
+      "levonShare": 15000
     },
     {
       "step": "worker",
-      "brand": "test4",
-      "plate": "77ee777",
-      "phone": "778877",
-      "days": 4,
-      "price": 5000,
-      "worker": "Qajik",
-      "finishDate": "2026-05-12T22:11:08.479Z",
-      "completedAt": "2026-05-08T22:12:28.791Z",
+      "brand": "Mercedes",
+      "plate": "None",
+      "phone": "Axvan",
+      "days": 0,
+      "price": 0,
+      "worker": "Levon",
+      "finishDate": "2026-05-09T11:30:33.211Z",
+      "completedAt": "2026-05-09T11:32:21.717Z",
       "completedMonth": "2026-05",
-      "qajikShare": 2000,
-      "levonShare": 3000
+      "qajikShare": 0,
+      "levonShare": 0
+    },
+    {
+      "step": "worker",
+      "brand": "Spitak Volt chaq",
+      "plate": "----",
+      "phone": "----",
+      "days": 0,
+      "price": 0,
+      "worker": "Qajik",
+      "finishDate": "2026-05-09T11:26:53.629Z",
+      "completedAt": "2026-05-10T12:53:27.100Z",
+      "completedMonth": "2026-05",
+      "qajikShare": 0,
+      "levonShare": 0
+    },
+    {
+      "step": "worker",
+      "brand": "Teana Arman",
+      "plate": "45111",
+      "phone": "Levon",
+      "days": 1,
+      "price": 0,
+      "worker": "Qajik",
+      "finishDate": "2026-05-10T11:27:24.727Z",
+      "completedAt": "2026-05-12T06:35:52.945Z",
+      "completedMonth": "2026-05",
+      "qajikShare": 0,
+      "levonShare": 0
+    },
+    {
+      "step": "worker",
+      "brand": "Lexus",
+      "plate": "044",
+      "phone": "Lyov",
+      "days": 0,
+      "price": 40000,
+      "worker": "Levon",
+      "finishDate": "2026-05-09T11:28:02.231Z",
+      "completedAt": "2026-05-12T19:43:16.230Z",
+      "completedMonth": "2026-05",
+      "qajikShare": 10000,
+      "levonShare": 30000
     }
   ]
 }
